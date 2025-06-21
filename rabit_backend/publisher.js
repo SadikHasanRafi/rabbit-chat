@@ -1,5 +1,5 @@
-import amqp from "amqplib";
-
+// import amqp from "amqplib";
+const amqp = require("amqplib");
 
 let channel;
 
@@ -36,4 +36,4 @@ let channel;
 
 // };
 
-export { addProduct };
+module.export = { addProduct };

@@ -68,31 +68,97 @@ app.get("/", (req, res) => {
 // });
 
 
+// app.get("/add-product", async (req, res) => {
+//   try {
+//     const connection = await amqp.connect("amqp://localhost");
+//     const channel = await connection.createChannel();
+
+//     await channel.assertQueue("add-product", { durable: true });
+
+//     const msg = await channel.consume("add-product", { noAck: false });
+
+//     if (msg) {
+//       const message = msg.content.toString();
+//       console.log("📥 Received:", message);
+//       res.send(`✅ Received message: ${message}`);
+//     } else {
+//       res.send("❌ No messages in queue.");
+//     }
+
+//     await channel.close();
+//     await connection.close();
+//   } catch (err) {
+//     console.error("❌ Error:", err);
+//     res.status(500).send("Server error while reading queue.");
+//   }
+// });
+
+
+
+
+
+
+
+
+
 app.get("/add-product", async (req, res) => {
-  const connection = await amqp.connect("amqp://localhost");
-  const channel = await connection.createChannel();
+  try {
+    const connection = await amqp.connect("amqp://localhost");
+    const channel = await connection.createChannel();
 
-  await channel.assertQueue("add-product", { durable: true });
+    await channel.assertQueue("add-product", { durable: true });
 
-  await channel.consume(
-    "add-product",
-    (msg) => {
-      if (msg !== null) {
-        const message = msg.content.toString();
-        console.log("📥 Received:", message);
-        channel.ack(msg);
-        res.send(`✅ Received and acknowledged: ${message}`);
-      } else {
-        res.send("❌ No message received");
+    // Flag to prevent sending multiple responses
+    let responded = false;
+
+    await channel.consume(
+      "add-product",
+      (msg) => {
+        if (msg !== null && !responded) {
+          const message = msg.content.toString();
+          console.log("📥 Received:", message);
+          channel.ack(msg);
+
+          responded = true;
+          res.send(`✅ Received message: ${message}`);
+
+          // Clean up
+          setTimeout(async () => {
+            await channel.close();
+            await connection.close();
+          }, 100); // wait a moment to ensure ack is processed
+        }
+      },
+      { noAck: false }
+    );
+
+    // Optional: add a timeout so request doesn’t hang forever
+    setTimeout(() => {
+      if (!responded) {
+        responded = true;
+        res.send("❌ No message received in time.");
+        channel.close();
+        connection.close();
       }
-    },
-    { noAck: false }
-  );
-
-  const x = await channel.get("add-product")
-  console.log("🚀 ~ add_product.js:93 ~ app.get ~ x:", x)
-  res.send(await channel.get("add-product"))
+    }, 5000); // Wait up to 5 seconds for a message
+  } catch (err) {
+    console.error("❌ Error:", err);
+    res.status(500).send("Server error while reading queue.");
+  }
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 app.listen(port, () => {
