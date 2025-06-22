@@ -39,17 +39,20 @@ async function startConsumer() {
   const connection = await amqp.connect("amqp://localhost");
   const channel = await connection.createChannel();
 
-  await channel.assertQueue("add-product", { durable: true });
+  await channel.assertQueue("admin-message-queue", { durable: false });
 
-  channel.consume("add-product", (msg) => {
+  channel.consume("admin-message-queue",async  (msg) => {
     if (msg !== null) {
       const message = msg.content.toString();
       console.log(`${messageIndex++} 📥  Received: ${message}`);
       channel.ack(msg);
+        // await channel.close(); // Close the channel after processing the message
+        // await connection.close();
       // Do something with the message
     }
   }, { noAck: false });
-
+  
+ // Close the connection after processing the message
   console.log("🔁 Waiting for messages in 'add-product' queue...");
 }
 
