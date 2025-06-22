@@ -5,7 +5,7 @@ const amqp = require("amqplib");
 
 
 const app = express()
-const port = 8080
+const port = 8000
 app.use(express.json());
 let channel;
 // Add these lines
@@ -20,24 +20,29 @@ app.get('/',async (req, res) => {
 })
 
 
-app.post('/add-product', async (req, res) => {
-  console.log("🚀 ~ server.js:19 ~ app.post ~ req.body:", req.body);
 
+
+app.post('/add-product', async (req, res) => {
   const connection = await amqp.connect("amqp://localhost");
   const channel = await connection.createChannel();
   let queue = "add-product";
 
-  await channel.assertQueue(queue, { durable: true });
+  await channel.assertQueue(queue, { durable: true }); // ⚠️ Important point here
 
-  // Convert req.body to string before Buffer.from
   channel.sendToQueue(queue, Buffer.from(JSON.stringify(req.body)));
   console.log(`message sent to ${queue}:`, req.body);
 
   await channel.close();
   await connection.close();
 
-  res.send('queue is added');
+  res.send('Queue is added');
 });
+
+
+
+
+
+
 
 app.listen(port, () => {
   console.log(`server listening on port ${port}`)
