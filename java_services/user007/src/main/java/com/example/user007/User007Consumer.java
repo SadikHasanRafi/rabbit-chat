@@ -1,4 +1,4 @@
-package com.example.user1;
+package com.example.user007;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -12,19 +12,25 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DeliverCallback;
 
+
 @RestController
-public class User1Consumer {
+public class User007Consumer {
+
     @GetMapping("/")
-    public String index() {
-        return " User 1 is running.";
+    public String helloString(){
+        return "hello from 007";
     }
 
-    @GetMapping("/user1-get-message")
+
+
+    @GetMapping("/user007-get-message")
     public Map<String, Object> getMessage() {
         final String[] msg = new String[1];
         msg[0] = "{}"; // default empty JSON
-        final String queue_name = "admin_queue1";
-        final String exchange_name = "admin_exchange1";
+        final String queue_name = "admin_queue3";
+        final String exchange_name = "admin_exchange2";
+        final String routing_key = "admin_routing_key";
+
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost("localhost");
 
@@ -35,15 +41,15 @@ public class User1Consumer {
             connection = factory.newConnection();
             channel = connection.createChannel();
 
-            channel.exchangeDeclare(exchange_name, "fanout", true, false, null);
+            channel.exchangeDeclare(exchange_name, "direct", true, false, null);
             channel.queueDeclare(queue_name, true, false, false, null);
-            channel.queueBind(queue_name, exchange_name, "");
+            channel.queueBind(queue_name, exchange_name, routing_key);
 
 
             DeliverCallback deliverCallback = (consumerTag, delivery) -> {
                 String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
                 msg[0] = message;
-                System.out.println(" 📣 Received user 1: '" + message + "'");
+                System.out.println(" 📣 Received user 007: '" + message + "'");
             };
 
             channel.basicConsume(queue_name, true, deliverCallback, consumerTag -> {
