@@ -57,6 +57,8 @@ app.get('/', (req, res) => {
 
 
 // http://localhost:5000/send-message
+let automateIntervalId = null;
+let automateCountdownId = null;
 
 app.post("/automate-producer", (req, res) => {
   const { frequencySeconds, loremSize } = req.body;
@@ -75,16 +77,20 @@ app.post("/automate-producer", (req, res) => {
 
   let nextSendIn = intervalMs;
 
+  // Clear any previous intervals if running
+  if (automateIntervalId) clearInterval(automateIntervalId);
+  if (automateCountdownId) clearInterval(automateCountdownId);
+
   // ⏱️ Countdown timer
-  const countdown = setInterval(() => {
+  automateCountdownId = setInterval(() => {
     nextSendIn -= 100;
     const secondsLeft = (nextSendIn / 1000).toFixed(2);
     process.stdout.write(`⏳ Next send in: ${secondsLeft}s\r`);
     if (nextSendIn <= 0) nextSendIn = intervalMs;
-  }, 100);
+  }, 1);
 
   // 🔁 Send message every intervalMs
-  const intervalId = setInterval(async () => {
+  automateIntervalId = setInterval(async () => {
     try {
       const response = await axios.post("http://localhost:5000/send-message", size.toString(), {
         headers: { "Content-Type": "text/plain" },
@@ -93,8 +99,10 @@ app.post("/automate-producer", (req, res) => {
       console.log(`\n📤 Sent: ${size} → ${response.data}`);
     } catch (err) {
       console.error("\n❌ Failed to send:", err.message);
-      clearInterval(intervalId);
-      clearInterval(countdown);
+      clearInterval(automateIntervalId);
+      clearInterval(automateCountdownId);
+      automateIntervalId = null;
+      automateCountdownId = null;
     }
   }, intervalMs);
 
@@ -103,6 +111,20 @@ app.post("/automate-producer", (req, res) => {
     frequencySeconds: freq,
     sendingValue: size,
   });
+});
+
+// API to stop the automated producer
+app.get("/stop-automate-producer", (req, res) => {
+  if (automateIntervalId) {
+    clearInterval(automateIntervalId);
+    automateIntervalId = null;
+  }
+  if (automateCountdownId) {
+    clearInterval(automateCountdownId);
+    automateCountdownId = null;
+  }
+  console.log("🛑 Automation stopped");
+  res.send({ status: "stopped" });
 });
 
 
