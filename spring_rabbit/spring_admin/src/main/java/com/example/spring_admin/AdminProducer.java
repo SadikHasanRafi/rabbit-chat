@@ -27,7 +27,7 @@ public class AdminProducer {
 
     @PostMapping("/send-message")
     public String sendMessage(@RequestBody String entity) {
-        System.out.println("🚀 Received entity: " + entity);
+        // System.out.println("🚀 Received entity: " + entity);
 
         if (entity == null || entity.trim().isEmpty()) {
             return "❌ Entity cannot be null or empty";
@@ -37,6 +37,7 @@ public class AdminProducer {
             float value = Float.parseFloat(entity.trim());
             int sentenceSize = (int) (value * 10000);
             entity = faker.lorem().sentence(sentenceSize);
+
         } catch (NumberFormatException e) {
             return "❌ Invalid number format in entity: " + entity;
         }
@@ -47,9 +48,11 @@ public class AdminProducer {
 
         String message = counter++ + ". " + entity;
         rabbitTemplate.convertAndSend(AdminConfig.fanout_exchange, "", message);
-
+        System.out.println("🚀 ~ AdminProducer.java:54 ~ AdminProducer ~ StringsendMessage ~ message : "+ message);
         return "✅ Message sent: " + message;
     }
+        
+
 
 
 }

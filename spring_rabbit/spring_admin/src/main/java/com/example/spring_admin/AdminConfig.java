@@ -29,13 +29,13 @@ public class AdminConfig {
     @Bean
     public Binding binding_fanout2() {
         return BindingBuilder.bind(new Queue(queue1, true))
-                .to(new DirectExchange(direct_exchange, true, false)).with("routingKey1");
+                .to(new DirectExchange(direct_exchange, true, false)).with("routingKey2");
     }
 
     @Bean
     public Binding binding_fanout3() {
         return BindingBuilder.bind(new Queue(queue3, true))
-                .to(new DirectExchange(direct_exchange, true, false)).with("routingKey1");
+                .to(new DirectExchange(direct_exchange, true, false)).with("routingKey3");
     }
 
     @Bean
